@@ -42,6 +42,38 @@ public class Log4jConfig extends XmlConfiguration {
             "\n<!-- Auto Generated. DO NOT MODIFY IT! -->\n" +
             "<Configuration status=\"info\" packages=\"org.apache.doris.common\">\n" +
             "  <Appenders>\n" +
+            "    <Console name=\"Console\" target=\"SYSTEM_OUT\">\n" +
+            "      <PatternLayout charset=\"UTF-8\">\n" +
+            "        <Pattern>%d{yyyy-MM-dd HH:mm:ss,SSS} %p (%t|%tid) [%C{1}.%M():%L] %m%n</Pattern>\n" +
+            "      </PatternLayout>\n" +
+            "    </Console>\n" +
+            "    <Console name=\"AuditConsole\" target=\"SYSTEM_OUT\">\n" +
+            "      <PatternLayout charset=\"UTF-8\">\n" +
+            "        <Pattern>%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %m%n</Pattern>\n" +
+            "      </PatternLayout>\n" +
+            "    </Console>\n" +
+            "    <GELF name=\"GelfAppender\" server=\"10.241.1.16\" port=\"12201\" hostName=\"doris-fe\">\n" +
+            "      <PatternLayout charset=\"UTF-8\">\n" +
+            "        <Pattern>%d{yyyy-MM-dd HH:mm:ss,SSS} %p (%t|%tid) [%C{1}.%M():%L] %m%n</Pattern>\n" +
+            "      </PatternLayout>\n" +
+            "      <Filters>\n" +
+            "        <Filter type=\"MarkerFilter\" marker=\"FLOW\" onMatch=\" DENY \" onMismatch=\" NEUTRAL \"/>\n" +
+            "        <Filter type=\"MarkerFilter\" marker=\"EXCEPTION\" onMatch=\" DENY \" onMismatch=\" ACCEPT \"/>\n" +
+            "      </Filters>\n" +
+            "      <!-- Additional fields -->\n" +
+            "      <KeyValuePair key=\"jvm\" value=\"${java:vm}\"/>\n" +
+            "    </GELF>\n" +
+            "    <GELF name=\"AuditGelfAppender\" server=\"10.241.1.16\" port=\"12201\" hostName=\"doris-fe\">\n" +
+            "      <PatternLayout charset=\"UTF-8\">\n" +
+            "        <Pattern>%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %m%n</Pattern>\n" +
+            "      </PatternLayout>\n" +
+            "      <Filters>\n" +
+            "        <Filter type=\"MarkerFilter\" marker=\"FLOW\" onMatch=\" DENY \" onMismatch=\" NEUTRAL \"/>\n" +
+            "        <Filter type=\"MarkerFilter\" marker=\"EXCEPTION\" onMatch=\" DENY \" onMismatch=\" ACCEPT \"/>\n" +
+            "      </Filters>\n" +
+            "      <!-- Additional fields -->\n" +
+            "      <KeyValuePair key=\"jvm\" value=\"${java:vm}\"/>\n" +
+            "    </GELF>\n" +
             "    <RollingFile name=\"Sys\" fileName=\"${sys_log_dir}/fe.log\" filePattern=\"${sys_log_dir}/fe.log.${sys_file_pattern}-%i\">\n" +
             "      <PatternLayout charset=\"UTF-8\">\n" +
             "        <Pattern>%d{yyyy-MM-dd HH:mm:ss,SSS} %p (%t|%tid) [%C{1}.%M():%L] %m%n</Pattern>\n" +
@@ -90,6 +122,8 @@ public class Log4jConfig extends XmlConfiguration {
             "  </Appenders>\n" +
             "  <Loggers>\n" +
             "    <Root level=\"${sys_log_level}\">\n" +
+            "      <AppenderRef ref=\"Console\"/>\n" +
+            "      <AppenderRef ref=\"GelfAppender\"/>\n" +
             "      <AppenderRef ref=\"Sys\"/>\n" +
             "      <AppenderRef ref=\"SysWF\" level=\"WARN\"/>\n" +
             "    </Root>\n" +
@@ -154,7 +188,7 @@ public class Log4jConfig extends XmlConfiguration {
             sb.append("<Logger name='" + s + "' level='DEBUG'/>");
         }
         for (String s : auditModules) {
-            sb.append("<Logger name='audit." + s + "' level='INFO'/>");
+            sb.append("<Logger name='audit." + s + "' level='INFO'><AppenderRef ref=\"AuditConsole\"/><AppenderRef ref=\"AuditGelfAppender\"/></Logger>");
         }
         newXmlConfTemplate = newXmlConfTemplate.replaceAll("<!--REPLACED BY AUDIT AND VERBOSE MODULE NAMES-->",
                 sb.toString());
